@@ -15,6 +15,9 @@ if (existsSync(envFile)) {
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3001),
+  // Required, no default: a missing connection string should fail loudly at
+  // startup rather than as a confusing error on the first query.
+  DATABASE_URL: z.url(),
 });
 
 const parsed = envSchema.safeParse(process.env);

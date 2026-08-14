@@ -22,6 +22,9 @@
     "start": "npm run start -w @expense-tracker/api",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
+    "db:generate": "npm run db:generate -w @expense-tracker/api",
+    "db:migrate": "npm run db:migrate -w @expense-tracker/api",
+    "db:studio": "npm run db:studio -w @expense-tracker/api",
     "clean": "rimraf \"{apps,packages}/*/dist\" \"{apps,packages}/*/*.tsbuildinfo\""
   },
   "devDependencies": {

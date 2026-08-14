@@ -5,5 +5,9 @@
     "outDir": "./dist",
     "types": ["node"]
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  // Generated migrations: .sql plus drizzle's meta/*.json. With
+  // resolveJsonModule on, the include glob would otherwise pull those snapshots
+  // into the program and copy them into dist/.
+  "exclude": ["src/db/migrations"]
 }
