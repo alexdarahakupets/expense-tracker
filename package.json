@@ -1,0 +1,37 @@
+{
+  "name": "expense-tracker",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run build -w @expense-tracker/shared && concurrently -n shared,api,web -c magenta,cyan,green \"npm:dev:shared\" \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:shared": "npm run dev -w @expense-tracker/shared",
+    "dev:api": "npm run dev -w @expense-tracker/api",
+    "dev:web": "npm run dev -w @expense-tracker/web",
+    "build": "npm run build -w @expense-tracker/shared && npm run build -w @expense-tracker/api && npm run build -w @expense-tracker/web",
+    "typecheck": "npm run build -w @expense-tracker/shared && npm run typecheck -w @expense-tracker/api && npm run typecheck -w @expense-tracker/web",
+    "lint": "eslint .",
+    "test": "echo \"no tests yet\" && exit 0",
+    "start": "npm run start -w @expense-tracker/api",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "clean": "rimraf \"{apps,packages}/*/dist\" \"{apps,packages}/*/*.tsbuildinfo\""
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "concurrently": "^9.2.1",
+    "eslint": "^9.39.0",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "globals": "^16.5.0",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.0"
+  }
+}
