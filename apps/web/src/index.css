@@ -41,3 +41,75 @@ dd {
   margin: 0;
   font-variant-numeric: tabular-nums;
 }
+
+/* --- Auth form ----------------------------------------------------------- */
+
+.auth-form {
+  display: grid;
+  gap: 1rem;
+  max-width: 22rem;
+  margin: 1.5rem 0;
+}
+
+.field {
+  display: grid;
+  gap: 0.25rem;
+}
+
+label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+input {
+  font: inherit;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+  border-radius: 0.375rem;
+  background: transparent;
+  color: inherit;
+}
+
+input:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 1px;
+}
+
+button[type='submit'] {
+  font: inherit;
+  padding: 0.55rem 1rem;
+  border: 0;
+  border-radius: 0.375rem;
+  /* :root sets `color-scheme: light dark`, so light-dark() resolves against the
+     visitor's preference without a media query. */
+  background: light-dark(#1a1a1a, #e6e6e6);
+  color: light-dark(#ffffff, #1a1a1a);
+  cursor: pointer;
+  justify-self: start;
+}
+
+button[type='submit']:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+/* A button that reads as a link — keeps the mode toggle keyboard-accessible
+   without pretending an <a> can switch state. */
+.link {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.link:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.error {
+  font-size: 0.9rem;
+}

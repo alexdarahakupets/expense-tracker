@@ -1,7 +1,8 @@
 /**
  * Drizzle table definitions — the single source of truth for the database shape.
  *
- * Empty for now: the auth tables arrive with Better Auth, domain tables after.
+ * The four Better Auth tables live in `auth-schema.ts`, which is generated — see
+ * that file's header before editing it. Domain tables are written here by hand.
  *
  * Rules for anything added here:
  * - Every domain table gets a `userId` foreign key to the Better Auth user table,
@@ -15,4 +16,6 @@
  * become snake_case columns automatically (`amountCents` -> `amount_cents`).
  */
 
-export {};
+// Re-exported rather than imported-and-listed so both `drizzle(pool, { schema })`
+// and drizzle.config.ts's `schema: './src/db/schema.ts'` see one flat namespace.
+export * from './auth-schema.js';

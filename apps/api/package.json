@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@expense-tracker/shared": "*",
+    "better-auth": "^1.7.2",
     "drizzle-orm": "^0.45.2",
     "express": "^5.1.0",
     "pg": "^8.23.0",
