@@ -22,7 +22,9 @@ sees and touches their own data.
   (`schema.ts`, generated migrations in `migrations/`; `apps/api/drizzle.config.ts`
   is at the workspace root, not in `src/`)
 - Env: copy `.env.example` to `.env` at the repo root before running anything —
-  `DATABASE_URL` is required and the API exits at startup without it.
+  `DATABASE_URL` and `BETTER_AUTH_SECRET` (min 32 chars) are both required and
+  the API exits at startup without either. `BETTER_AUTH_URL` is the origin the
+  BROWSER uses (the Vite server in dev), not the API port.
 - Express routes/handlers: `apps/api/src/routes/`
 - Auth setup & `requireAuth` middleware: `apps/api/src/auth/`
 - React pages/components: `apps/web/src/`
@@ -41,7 +43,10 @@ sees and touches their own data.
 - Health: `/api/health` is liveness (no DB); `/api/health/db` is readiness
   (200 up / 503 down). Keep `/api/health` answerable while Postgres is down.
 - Better Auth schema: regenerate its tables via the Better Auth CLI when auth
-  config changes, then run a migration.
+  config changes, then run a migration. Regeneration OVERWRITES
+  `src/db/auth-schema.ts` and drops one required hand edit: every `timestamp(...)`
+  needs `{ withTimezone: true }` re-applied, or the four auth tables silently
+  become `timestamp without time zone` and break the UTC rule above.
 
 ## Non-negotiable conventions
 - **Money is NEVER a float.** Store amounts as integer minor units
@@ -54,6 +59,12 @@ sees and touches their own data.
   `packages/shared`. Never trust the client.
 - **Auth via session cookies** (Better Auth). Protect routes with the
   `requireAuth` middleware; never read the user id from the request body.
+- **Brute-force protection is NOT live in dev.** `auth.ts` sets no `rateLimit`,
+  so Better Auth's default applies: enabled in production only, backed by
+  in-memory storage (limits reset on restart and aren't shared across
+  instances). The `x-client-ip` plumbing in `app.ts` is correct and verified,
+  but it only bites in production — don't read those comments as saying a local
+  sign-in loop is throttled. Revisit if auth moves beyond one instance.
 - **Timestamps stored in UTC.**
 - **Columns are snake_case, TS fields are camelCase.** The client and
   `drizzle.config.ts` both set `casing: 'snake_case'`, so `amountCents` becomes
@@ -77,7 +88,12 @@ sees and touches their own data.
 - `drizzle-kit` is a **devDependency**, so `db:migrate` as written can't run on a
   production box. Deploying needs either drizzle-kit installed there or a small
   programmatic `src/db/migrate.ts`.
-- After any change, run `typecheck`, `lint`, and relevant tests before calling it done.
+- After any change, run `typecheck` and `lint` before calling it done. Both
+  pass today. **There is no test suite yet** — `npm run test` is a stub that
+  echoes "no tests yet", so "run the tests" is currently a no-op. Auth is the
+  security boundary and has zero automated coverage; it has only been verified
+  by hand. Add a real runner with the first slice that needs one, then restore
+  tests to this line and to the commands list above.
 - Each working slice should be commit-sized — verify it, then hand it to the
   developer to commit.
 - **Propose CLAUDE.md changes if needed** - after implementation check the new state of the app against the CLAUDE.md file and propose changes, but don't make them automatically.
@@ -86,7 +102,7 @@ sees and touches their own data.
 <!-- Update this as you go so each session starts oriented. -->
 - [x] Monorepo skeleton + docker-compose Postgres
 - [x] Drizzle connected, migration pipeline working
-- [ ] Better Auth (email/password) + login/logout UI
+- [x] Better Auth (email/password) + login/logout UI
 - [ ] Expenses CRUD, user-scoped
 - [ ] Categories
 - [ ] Deployed
