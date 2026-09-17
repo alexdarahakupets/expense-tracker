@@ -42,6 +42,69 @@ dd {
   font-variant-numeric: tabular-nums;
 }
 
+/* --- Signed-in shell ----------------------------------------------------- */
+
+.shell-header {
+  border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+}
+
+/* The bar and the nav share `main`'s measure so the tabs line up with the
+   content underneath them rather than floating off to the edge. */
+.shell-bar,
+.shell-nav {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.shell-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding-top: 1rem;
+}
+
+.shell-brand {
+  font-weight: 600;
+}
+
+.shell-user {
+  font-size: 0.9rem;
+}
+
+.shell-nav {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.shell-nav a {
+  display: inline-block;
+  padding: 0.6rem 0;
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  opacity: 0.65;
+}
+
+.shell-nav a:hover {
+  opacity: 1;
+}
+
+/* react-router stamps `.active` on the matching NavLink. Colour alone would not
+   survive a greyscale screen, so the underline carries the state too. */
+.shell-nav a.active {
+  opacity: 1;
+  font-weight: 600;
+  border-bottom-color: currentColor;
+}
+
+.shell-nav a:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
 /* --- Auth form ----------------------------------------------------------- */
 
 .auth-form {
