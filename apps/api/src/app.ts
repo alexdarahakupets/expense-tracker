@@ -5,8 +5,27 @@ import express, { type Express, type NextFunction, type Request, type Response }
 import { toNodeHandler } from 'better-auth/node';
 import { CLIENT_IP_HEADER, auth } from './auth/auth.js';
 import { isProduction, trustProxy } from './env.js';
+import { HttpError } from './http-error.js';
 import { healthRouter } from './routes/health.js';
 import { protectedRouter } from './routes/protected.js';
+
+/**
+ * Errors from `express.json()` — malformed JSON, body too large — arrive with a
+ * 4xx `status` and a `type` such as `entity.parse.failed`. Narrowed by shape
+ * rather than by class because body-parser does not export its error type.
+ */
+function isBodyParserError(err: unknown): err is { status: number; type: string } {
+  if (typeof err !== 'object' || err === null) return false;
+
+  const candidate = err as { status?: unknown; type?: unknown };
+
+  return (
+    typeof candidate.type === 'string' &&
+    typeof candidate.status === 'number' &&
+    candidate.status >= 400 &&
+    candidate.status < 500
+  );
+}
 
 /**
  * Builds the Express app without binding a port, so tests can import it
@@ -71,7 +90,31 @@ export function createApp(): Express {
     serveWebApp(app);
   }
 
+  // The single place a thrown error becomes a response. Express 5 forwards
+  // rejected promises from handlers here on its own, so routes `throw
+  // notFound()` and never format an error body themselves.
   app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+    // An HttpError is a decision we made — its message is written for the
+    // client. Anything else is an unanticipated bug, and its message could
+    // contain a query, a path, or a connection string, so it never leaves the
+    // process.
+    if (err instanceof HttpError) {
+      res.status(err.status).json({ error: err.message });
+      return;
+    }
+
+    // `express.json()` rejects a malformed or oversized body by throwing, and
+    // that is the CLIENT's mistake. Without this branch it reaches the 500
+    // below, telling someone who mistyped their JSON that the server is broken.
+    // The parser's own message is not echoed — it embeds a byte offset and a
+    // fragment of the body that was sent.
+    if (isBodyParserError(err)) {
+      const message =
+        err.type === 'entity.too.large' ? 'Request body too large' : 'Malformed request body';
+      res.status(err.status).json({ error: message });
+      return;
+    }
+
     console.error(err);
     res.status(500).json({ error: 'Internal server error' });
   });

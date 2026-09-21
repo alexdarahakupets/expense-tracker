@@ -51,10 +51,18 @@ sees and touches their own data.
 ## Non-negotiable conventions
 - **Money is NEVER a float.** Store amounts as integer minor units
   (`amount_cents` integer) plus a `currency` code column. Do all math in integers.
-- **Every domain table has a `user_id` foreign key** to the Better Auth user
-  table, and **every query is scoped to the authenticated user.** No route ever
-  returns or mutates another user's rows. Enforce this in the handler, not just
-  the UI.
+- **Domain rows are reachable only through GROUP MEMBERSHIP.** Groups are shared
+  between users, so "scope every query to the authenticated user" is the wrong
+  shape and no longer applies. Domain tables carry a `group_id`, not an owner
+  column; `expense_group.created_by` records who started a group and grants
+  nothing. Every group-scoped route calls `requireGroupMembership` (in
+  `apps/api/src/routes/membership.ts`) FIRST — before validation, before any
+  other query — and that helper is the only place the check is written. Enforce
+  in the handler, never the UI.
+- **A non-member gets 404, never 403.** A 403 confirms a group id is real, which
+  turns ids into something worth probing. Outsiders and wrong ids must be
+  indistinguishable. 403 is only for a member who lacks the *role* for an
+  action — they can already see the group, so it reveals nothing new.
 - **Validate all input with Zod at the route boundary** using schemas from
   `packages/shared`. Never trust the client.
 - **Auth via session cookies** (Better Auth). Protect routes with the
@@ -103,6 +111,8 @@ sees and touches their own data.
 - [x] Monorepo skeleton + docker-compose Postgres
 - [x] Drizzle connected, migration pipeline working
 - [x] Better Auth (email/password) + login/logout UI
-- [ ] Expenses CRUD, user-scoped
+- [x] Dashboard shell — Expenses / Statistics / Account nav
+- [x] Expense groups + membership (create, list, detail, add member by email)
+- [ ] Expenses CRUD with custom shares, group-scoped
 - [ ] Categories
 - [ ] Deployed

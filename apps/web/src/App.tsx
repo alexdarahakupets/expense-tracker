@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import { DashboardLayout } from './layouts/DashboardLayout.js';
 import { AccountPage } from './pages/AccountPage.js';
+import { GroupDetailPage } from './pages/GroupDetailPage.js';
 import { GroupsPage } from './pages/GroupsPage.js';
 import { LoginPage } from './pages/LoginPage.js';
 import { StatisticsPage } from './pages/StatisticsPage.js';
@@ -31,6 +32,7 @@ export function App() {
             <Route index element={<Navigate to="/expenses" replace />} />
 
             <Route path="expenses" element={<GroupsPage />} />
+            <Route path="expenses/:groupId" element={<GroupDetailPage />} />
             <Route path="statistics" element={<StatisticsPage />} />
             <Route path="account" element={<AccountPage />} />
 

@@ -4,4 +4,5 @@
  * duplicate validation on either side.
  */
 export * from './auth.js';
+export * from './groups.js';
 export * from './health.js';

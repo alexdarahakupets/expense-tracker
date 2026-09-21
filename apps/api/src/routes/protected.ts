@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../auth/require-auth.js';
+import { groupsRouter } from './groups.js';
 import { meRouter } from './me.js';
 
 /**
@@ -16,3 +17,4 @@ export const protectedRouter: Router = Router();
 protectedRouter.use(requireAuth);
 
 protectedRouter.use(meRouter);
+protectedRouter.use(groupsRouter);
