@@ -2,15 +2,19 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router';
 import {
   addGroupMemberSchema,
+  expenseListResponseSchema,
+  formatCents,
   groupDetailResponseSchema,
+  type Expense,
   type GroupDetail,
 } from '@expense-tracker/shared';
+import { AddExpenseForm } from '../components/AddExpenseForm.js';
 import { ApiError, getJson, postJson } from '../lib/api.js';
 
 type Fetched<T> = { kind: 'loading' } | { kind: 'ok'; value: T } | { kind: 'error'; message: string };
 
 /**
- * One group: who is in it, and (from the next slice) what was spent.
+ * One group: who is in it and what was spent in it.
  *
  * A 404 here is the normal response for a group you are not in — the server does
  * not distinguish that from a group that never existed, so neither does this
@@ -20,6 +24,7 @@ export function GroupDetailPage() {
   const { groupId } = useParams<{ groupId: string }>();
 
   const [group, setGroup] = useState<Fetched<GroupDetail>>({ kind: 'loading' });
+  const [expenses, setExpenses] = useState<Fetched<Expense[]>>({ kind: 'loading' });
   const [email, setEmail] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -37,8 +42,18 @@ export function GroupDetailPage() {
           signal,
         );
         setGroup({ kind: 'ok', value });
+
+        // Only after the group resolves: if that 404s, the caller is not a
+        // member and this request would 404 for the same reason.
+        const loaded = await getJson(
+          `/api/groups/${id}/expenses`,
+          (input) => expenseListResponseSchema.parse(input).expenses,
+          signal,
+        );
+        setExpenses({ kind: 'ok', value: loaded });
       } catch (error) {
         if (signal.aborted) return;
+        setExpenses({ kind: 'error', message: 'Could not load expenses' });
         setGroup({
           kind: 'error',
           message:
@@ -161,10 +176,52 @@ export function GroupDetailPage() {
 
       <section>
         <h2>Expenses</h2>
-        <p className="muted">
-          Recording expenses lands in the next slice — amounts, currency, who paid, and how
-          the cost splits between members.
-        </p>
+
+        {expenses.kind === 'loading' && <p>Loading…</p>}
+        {expenses.kind === 'error' && <p className="error">{expenses.message}</p>}
+
+        {expenses.kind === 'ok' && expenses.value.length === 0 && (
+          <p className="muted">Nothing recorded yet.</p>
+        )}
+
+        {expenses.kind === 'ok' && expenses.value.length > 0 && (
+          <ul className="card-list">
+            {expenses.value.map((item) => (
+              <li key={item.id} className="expense">
+                <div className="expense-head">
+                  <span>{item.description}</span>
+                  {/* Currency beside every figure, never a bare number: a group
+                      can hold more than one and they are never added together. */}
+                  <strong>
+                    {formatCents(item.amountCents)} {item.currency}
+                  </strong>
+                </div>
+                <span className="muted">
+                  {item.paidByName} paid · {item.category} · {item.createdAt.slice(0, 10)}
+                </span>
+                <span className="muted">
+                  {item.shares
+                    .map((share) => `${share.name} ${formatCents(share.shareCents)}`)
+                    .join(' · ')}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <AddExpenseForm
+          groupId={value.id}
+          members={value.members}
+          onCreated={(created) => {
+            // Prepend: the list is newest-first, so this matches what a reload
+            // would show without a second round trip.
+            setExpenses((current) =>
+              current.kind === 'ok'
+                ? { kind: 'ok', value: [created, ...current.value] }
+                : { kind: 'ok', value: [created] },
+            );
+          }}
+        />
       </section>
     </>
   );

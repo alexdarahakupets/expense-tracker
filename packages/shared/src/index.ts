@@ -4,5 +4,7 @@
  * duplicate validation on either side.
  */
 export * from './auth.js';
+export * from './expenses.js';
 export * from './groups.js';
 export * from './health.js';
+export * from './money.js';

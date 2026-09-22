@@ -9,6 +9,7 @@ import {
   type GroupListResponse,
   type GroupMember,
 } from '@expense-tracker/shared';
+import { viewerId } from '../auth/require-auth.js';
 import { db } from '../db/client.js';
 import { expenseGroup, groupMember, user } from '../db/schema.js';
 import { conflict, notFound } from '../http-error.js';
@@ -24,20 +25,6 @@ import { requireGroupMembership, requireGroupOwner } from './membership.js';
  * `requireGroupMembership`. A `userId` in a body or query string is never read.
  */
 export const groupsRouter: Router = Router();
-
-/** `req.auth` is set by `requireAuth`; this narrows it and fails closed. */
-function viewerId(req: { auth?: { user: { id: string } } }): string {
-  const id = req.auth?.user.id;
-
-  if (!id) {
-    // Unreachable behind requireAuth. Kept as a hard stop so mounting this
-    // router outside `protectedRouter` fails closed instead of running
-    // unauthenticated queries.
-    throw notFound();
-  }
-
-  return id;
-}
 
 /** Members of one group, oldest first, with the names the UI needs. */
 async function loadMembers(groupId: string): Promise<GroupMember[]> {

@@ -67,3 +67,24 @@ export async function requireAuth(
   req.auth = { user: session.user, session: session.session };
   next();
 }
+
+/**
+ * The authenticated user's id, or a hard failure.
+ *
+ * Behind `requireAuth` this always succeeds — it exists so handlers narrow
+ * `req.auth` in one place instead of each writing its own `?.` dance, and so
+ * that mounting a router OUTSIDE `protectedRouter` fails closed rather than
+ * running queries with `undefined` as the user id.
+ *
+ * This is the ONLY way a handler learns who is calling. A `userId` in a body,
+ * query string, or header is never consulted.
+ */
+export function viewerId(req: Request): string {
+  const id = req.auth?.user.id;
+
+  if (!id) {
+    throw new Error('viewerId called outside requireAuth — router is mounted in the wrong place');
+  }
+
+  return id;
+}

@@ -113,6 +113,7 @@ sees and touches their own data.
 - [x] Better Auth (email/password) + login/logout UI
 - [x] Dashboard shell — Expenses / Statistics / Account nav
 - [x] Expense groups + membership (create, list, detail, add member by email)
-- [ ] Expenses CRUD with custom shares, group-scoped
-- [ ] Categories
+- [x] Expenses with custom shares, group-scoped (record + list)
+- [ ] Group summary (per-currency totals, per-person net) + settle placeholder
+- [ ] Categories (real, replacing the free-text string)
 - [ ] Deployed
