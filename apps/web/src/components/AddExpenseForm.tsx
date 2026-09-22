@@ -36,13 +36,16 @@ export function AddExpenseForm({ groupId, members, onCreated }: Props) {
   const [paidBy, setPaidBy] = useState(members[0]?.userId ?? '');
 
   /**
-   * Only the shares the user has TYPED, tagged with the split they were typed
-   * against. Everything else is derived during render below.
+   * The shares the user has TYPED, tagged with the membership they were typed
+   * against. Null means "nobody has touched the split", and the even division is
+   * derived during render instead.
    *
-   * Storing the key alongside the values is what lets the even split refresh
-   * when the amount or the membership changes, without an effect writing state
-   * (which would cascade a second render every keystroke). Edits made against
-   * an older total are ignored rather than left on screen disagreeing with it.
+   * Deriving rather than writing state in an effect avoids a cascading render on
+   * every keystroke. The key is the MEMBER LIST, deliberately not the amount:
+   * once someone edits the split by hand it is theirs to keep, and changing the
+   * amount leaves those numbers alone and simply reports the difference. Adding
+   * or removing a member does reset it, because a split that omits a member
+   * cannot be submitted at all.
    */
   const [typed, setTyped] = useState<{ key: string; values: Record<string, string> } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +53,7 @@ export function AddExpenseForm({ groupId, members, onCreated }: Props) {
 
   const amountCents = parseAmountToCents(amount);
 
-  const splitKey = `${String(amountCents)}:${members.map((member) => member.userId).join(',')}`;
+  const splitKey = members.map((member) => member.userId).join(',');
   const typedValues = typed?.key === splitKey ? typed.values : {};
   const evenShares = amountCents === null ? [] : splitEvenly(amountCents, members.length);
 
@@ -67,6 +70,9 @@ export function AddExpenseForm({ groupId, members, onCreated }: Props) {
     // starting point, rather than the other boxes blanking on first edit.
     setTyped({ key: splitKey, values: { ...displayed, [userId]: value } });
   }
+
+  /** True once the split has been hand-edited and stopped tracking the amount. */
+  const edited = typed?.key === splitKey;
 
   // Parsed back out of the inputs the same way the amount is — as strings,
   // never as floats.
@@ -195,6 +201,21 @@ export function AddExpenseForm({ groupId, members, onCreated }: Props) {
 
       <fieldset className="split">
         <legend>Split</legend>
+
+        {edited && (
+          <p className="muted split-hint">
+            Edited by hand, so it no longer follows the amount.{' '}
+            <button
+              type="button"
+              className="link"
+              onClick={() => {
+                setTyped(null);
+              }}
+            >
+              Split evenly again
+            </button>
+          </p>
+        )}
         {members.map((member) => (
           <div className="field" key={member.userId}>
             <label htmlFor={`share-${member.userId}`}>{member.name}</label>

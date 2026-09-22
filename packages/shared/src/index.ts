@@ -8,3 +8,4 @@ export * from './expenses.js';
 export * from './groups.js';
 export * from './health.js';
 export * from './money.js';
+export * from './summary.js';

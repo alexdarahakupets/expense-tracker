@@ -271,3 +271,58 @@ select {
 button[type='submit']:disabled {
   cursor: not-allowed;
 }
+
+.split-hint {
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* --- Group summary ------------------------------------------------------- */
+
+.currency-block h3 {
+  margin-bottom: 0.4rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.currency-block h3 .muted {
+  font-weight: 400;
+  font-size: 0.9rem;
+}
+
+.balances {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+
+.balances th,
+.balances td {
+  text-align: right;
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+
+.balances thead th,
+.balances tbody th {
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.balances tbody th {
+  font-size: 1rem;
+}
+
+.balances .muted {
+  font-size: 0.75rem;
+}
+
+/* Sign is already stated in words beside the figure; colour is reinforcement,
+   never the only signal. */
+.balances .owes {
+  color: light-dark(#a33, #f9a);
+}
+
+.balances .owed {
+  color: light-dark(#276749, #9ae6b4);
+}

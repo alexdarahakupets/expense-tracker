@@ -114,6 +114,6 @@ sees and touches their own data.
 - [x] Dashboard shell — Expenses / Statistics / Account nav
 - [x] Expense groups + membership (create, list, detail, add member by email)
 - [x] Expenses with custom shares, group-scoped (record + list)
-- [ ] Group summary (per-currency totals, per-person net) + settle placeholder
+- [x] Group summary (per-currency totals, per-person net) + settle placeholder
 - [ ] Categories (real, replacing the free-text string)
 - [ ] Deployed

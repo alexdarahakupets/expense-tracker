@@ -5,10 +5,13 @@ import {
   expenseListResponseSchema,
   formatCents,
   groupDetailResponseSchema,
+  groupSummaryResponseSchema,
   type Expense,
   type GroupDetail,
+  type GroupSummary,
 } from '@expense-tracker/shared';
 import { AddExpenseForm } from '../components/AddExpenseForm.js';
+import { GroupSummaryPanel } from '../components/GroupSummaryPanel.js';
 import { ApiError, getJson, postJson } from '../lib/api.js';
 
 type Fetched<T> = { kind: 'loading' } | { kind: 'ok'; value: T } | { kind: 'error'; message: string };
@@ -25,6 +28,8 @@ export function GroupDetailPage() {
 
   const [group, setGroup] = useState<Fetched<GroupDetail>>({ kind: 'loading' });
   const [expenses, setExpenses] = useState<Fetched<Expense[]>>({ kind: 'loading' });
+  const [summary, setSummary] = useState<GroupSummary | null>(null);
+  const [settling, setSettling] = useState(false);
   const [email, setEmail] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -51,6 +56,14 @@ export function GroupDetailPage() {
           signal,
         );
         setExpenses({ kind: 'ok', value: loaded });
+
+        setSummary(
+          await getJson(
+            `/api/groups/${id}/summary`,
+            (input) => groupSummaryResponseSchema.parse(input).summary,
+            signal,
+          ),
+        );
       } catch (error) {
         if (signal.aborted) return;
         setExpenses({ kind: 'error', message: 'Could not load expenses' });
@@ -71,6 +84,47 @@ export function GroupDetailPage() {
       controller.abort();
     };
   }, [groupId]);
+
+  /**
+   * Re-read the summary from the server after anything that changes the money.
+   *
+   * Deliberately a refetch rather than adjusting the balances locally: that
+   * would be a second implementation of the same arithmetic, free to drift from
+   * the one Postgres runs.
+   */
+  async function refreshSummary(id: string) {
+    try {
+      setSummary(
+        await getJson(
+          `/api/groups/${id}/summary`,
+          (input) => groupSummaryResponseSchema.parse(input).summary,
+          new AbortController().signal,
+        ),
+      );
+    } catch {
+      // A stale summary beside a fresh expense list is survivable; blanking the
+      // panel because one request failed is not an improvement.
+    }
+  }
+
+  async function handleSettle(id: string) {
+    setSettling(true);
+    try {
+      const settled = await postJson(`/api/groups/${id}/settle`, {}, (input) =>
+        groupSummaryResponseSchema.parse(input).summary,
+      );
+      setSummary(settled);
+      setGroup((current) =>
+        current.kind === 'ok'
+          ? { kind: 'ok', value: { ...current.value, settledAt: settled.settledAt } }
+          : current,
+      );
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'Could not settle the group');
+    } finally {
+      setSettling(false);
+    }
+  }
 
   async function handleAddMember(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -174,6 +228,15 @@ export function GroupDetailPage() {
         )}
       </section>
 
+      {summary !== null && (
+        <GroupSummaryPanel
+          summary={summary}
+          isOwner={isOwner}
+          settling={settling}
+          onSettle={() => void handleSettle(value.id)}
+        />
+      )}
+
       <section>
         <h2>Expenses</h2>
 
@@ -220,6 +283,7 @@ export function GroupDetailPage() {
                 ? { kind: 'ok', value: [created, ...current.value] }
                 : { kind: 'ok', value: [created] },
             );
+            void refreshSummary(value.id);
           }}
         />
       </section>
