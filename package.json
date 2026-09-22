@@ -18,7 +18,7 @@
     "build": "npm run build -w @expense-tracker/shared && npm run build -w @expense-tracker/api && npm run build -w @expense-tracker/web",
     "typecheck": "npm run build -w @expense-tracker/shared && npm run typecheck -w @expense-tracker/api && npm run typecheck -w @expense-tracker/web",
     "lint": "eslint .",
-    "test": "echo \"no tests yet\" && exit 0",
+    "test": "npm run test -w @expense-tracker/api",
     "start": "npm run start -w @expense-tracker/api",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",

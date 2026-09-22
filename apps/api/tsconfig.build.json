@@ -1,0 +1,13 @@
+{
+  // Build-only: narrows to src and turns emit back on, so dist/ mirrors the
+  // source tree. Tests are deliberately out of scope here — compiling them into
+  // dist/ would ship test code and break rootDir.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": "./src",
+    "outDir": "./dist"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["src/db/migrations"]
+}

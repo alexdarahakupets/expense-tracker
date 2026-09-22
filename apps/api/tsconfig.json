@@ -1,11 +1,18 @@
 {
+  // The DEFAULT project, and therefore the one your editor resolves for any file
+  // under apps/api. It must cover everything you can open — src, tests, and the
+  // Vitest config — or the editor falls back to an inferred project with no
+  // `types`, and `process` / `node:fs` / `node:url` light up red while the CLI
+  // stays green.
+  //
+  // It emits nothing. The build uses tsconfig.build.json, which narrows to src
+  // and sets rootDir/outDir.
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "./src",
-    "outDir": "./dist",
+    "noEmit": true,
     "types": ["node"]
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "test/**/*", "vitest.config.ts"],
   // Generated migrations: .sql plus drizzle's meta/*.json. With
   // resolveJsonModule on, the include glob would otherwise pull those snapshots
   // into the program and copy them into dist/.

@@ -18,6 +18,11 @@ sees and touches their own data.
   validation here, don't duplicate it.
 
 ## Where things live
+- API TypeScript projects: `apps/api/tsconfig.json` is the DEFAULT (and what your
+  editor resolves) — it covers `src`, `test` and `vitest.config.ts` and emits
+  nothing; `tsconfig.build.json` narrows to `src` and owns emit. Add a new
+  top-level folder to the default include or the editor will red-underline it
+  while `npm run typecheck` stays green.
 - Drizzle schema & migrations: `apps/api/src/db/`
   (`schema.ts`, generated migrations in `migrations/`; `apps/api/drizzle.config.ts`
   is at the workspace root, not in `src/`)
@@ -36,7 +41,9 @@ sees and touches their own data.
 - `npm run build` — build all packages
 - `npm run typecheck` — must pass before considering a change done
 - `npm run lint`
-- `npm run test`
+- `npm run test` — Vitest + supertest, in `apps/api/test/`. Needs Postgres
+  running (`npm run db:up`); it drops and recreates a SEPARATE
+  `expense_tracker_test` database each run and never touches your dev data.
 - DB: `npm run db:up` / `npm run db:down` (docker compose), `npm run db:generate`
   (create migration from schema), `npm run db:migrate` (apply),
   `npm run db:studio` (inspect)
@@ -87,6 +94,24 @@ sees and touches their own data.
 
 
 ## Workflow expectations
+- **Test-driven development is the default.** Three steps, in this order, and
+  don't collapse them:
+  1. **Agree the behaviour first.** State what is being built and what
+     "correct" means, in plain language, and settle the open questions before
+     any code. For anything structural this is plan mode (below).
+  2. **Write the failing test.** Run it and READ the failure. It has to fail for
+     the reason you expect — a test that passes before the feature exists is
+     testing nothing, and one that fails on a typo or a missing import has told
+     you nothing either.
+  3. **Implement until it is green**, and stop there.
+- **Never back-fill a test onto code that already works.** A test written by
+  reading the implementation inherits that implementation's bugs as its expected
+  values, and it will keep passing when the behaviour is wrong. If a test must
+  be added to existing code, break the code on purpose first and confirm the
+  test fails — if it stays green it is not testing what its name claims.
+- **A bug fix starts with a failing test that reproduces the bug.** If you
+  cannot make it fail first, you have not found the bug yet — you have found
+  something that looks like it.
 - **Use plan mode for structural changes** — schema design, new tables,
   migrations, or anything touching the auth/data layer. Show the plan before editing.
 - **Build one vertical slice at a time** (schema → migration → API → UI), verify
@@ -96,12 +121,19 @@ sees and touches their own data.
 - `drizzle-kit` is a **devDependency**, so `db:migrate` as written can't run on a
   production box. Deploying needs either drizzle-kit installed there or a small
   programmatic `src/db/migrate.ts`.
-- After any change, run `typecheck` and `lint` before calling it done. Both
-  pass today. **There is no test suite yet** — `npm run test` is a stub that
-  echoes "no tests yet", so "run the tests" is currently a no-op. Auth is the
-  security boundary and has zero automated coverage; it has only been verified
-  by hand. Add a real runner with the first slice that needs one, then restore
-  tests to this line and to the commands list above.
+- After any change, run `typecheck`, `lint` and `test` before calling it done.
+  All three pass today. They are the floor, not the point: green gates on code
+  whose test was written afterwards prove only that it agrees with itself.
+- **What the suite covers today**: the membership boundary (non-members get 404
+  on every group route, and that check runs BEFORE body validation), the
+  split-must-balance rule, and the money helpers.
+- **A new group-scoped route needs a row in the route table** in
+  `test/group-access.test.ts`. That list is maintained by hand, so a route that
+  forgets `requireGroupMembership` will NOT fail the suite until it is added —
+  add the route and its row together.
+- **Auth itself is still only verified by hand.** The tests sign up through the
+  real endpoint, so the cookie path is exercised, but sign-in failure modes,
+  session expiry and rate limiting have no coverage.
 - Each working slice should be commit-sized — verify it, then hand it to the
   developer to commit.
 - **Propose CLAUDE.md changes if needed** - after implementation check the new state of the app against the CLAUDE.md file and propose changes, but don't make them automatically.
@@ -115,5 +147,6 @@ sees and touches their own data.
 - [x] Expense groups + membership (create, list, detail, add member by email)
 - [x] Expenses with custom shares, group-scoped (record + list)
 - [x] Group summary (per-currency totals, per-person net) + settle placeholder
+- [x] Test suite — Vitest + supertest over the membership boundary and money rules
 - [ ] Categories (real, replacing the free-text string)
 - [ ] Deployed
